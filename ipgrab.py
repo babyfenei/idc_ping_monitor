@@ -47,7 +47,7 @@ def infoInit():
     province_info["gansu"] = {"name" : "兰州" , "abbr" : "甘肃" , "url" : "http://ip.yqie.com/cn/gansu/lanzhou/"}
     province_info["qinghai"] = {"name" : "西宁" , "abbr" : "青海" , "url" : "http://ip.yqie.com/cn/qinghai/xining/"}
     province_info["xinjiang"] = {"name" : "乌鲁木齐" , "abbr" : "新疆" , "url" : "http://ip.yqie.com/cn/xinjiang/wulumuqi/"}
- 
+     
     return province_info
  
  
@@ -57,7 +57,7 @@ class GetInfo(object):
     def __init__(self):
         pass
  
-    @retry(stop_max_attempt_number=1)
+    @retry(stop_max_attempt_number=3)
     def getHtml(self , province , url , province_info_shared):
         ####
         @LogHandler('getHtml()')
@@ -84,8 +84,11 @@ class GetInfo(object):
          
         results = self.parse(piece_list)
         province_info_temp = province_info_shared[province]
+        print({"cmcc" : results.get('cmcc')[0]})
         province_info_temp.update({"cmcc" : results.get('cmcc')[0]})
+        print({"telcom" : results.get('telcom')[0]})
         province_info_temp.update({"telcom" : results.get('telcom')[0]})
+        print({"unicom" : results.get('unicom')[0]})
         province_info_temp.update({"unicom" : results.get('unicom')[0]})
         province_info_shared[province] = province_info_temp
          
@@ -152,7 +155,7 @@ class GetInfo(object):
         for province in province_info_shared:
             pool.apply_async(self.getHtml , (province , province_info_shared.get(province).get("url") , province_info_shared), error_callback=self.throw_error)
         pool.close()
-        pool.join() 
+        pool.join()
  
         return province_info_shared
  
@@ -174,23 +177,27 @@ def syncToSmokingFile(province_info):
                    "menu = 电信 \n" \
                    "title = 电信 \n" \
                    "\n"
+
  
     for province in province_info:
         if province_info[province].get('cmcc'):
             record = "++ " + province_info[province].get('abbr') + "\n" \
                      "menu = " + province_info[province].get('name') + "\n" \
+                     "title = " + province_info[province].get('cmcc') + "\n" \
                      "host = " + province_info[province].get('cmcc') + "\n" \
                      "\n"
             data['cmcc'] += record
         if province_info[province].get('unicom'):
             record = "++ " + province_info[province].get('abbr') + "\n" \
                      "menu = " + province_info[province].get('name') + "\n" \
+                     "title = " + province_info[province].get('unicom') + "\n" \
                      "host = " + province_info[province].get('unicom') + "\n" \
                      "\n"
             data['unicom'] += record
         if province_info[province].get('telcom'):
             record = "++ " + province_info[province].get('abbr') + "\n" \
                      "menu = " + province_info[province].get('name') + "\n" \
+                     "title = " + province_info[province].get('telcom') + "\n" \
                      "host = " + province_info[province].get('telcom') + "\n" \
                      "\n"
             data['telcom'] += record
